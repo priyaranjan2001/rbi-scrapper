@@ -1,0 +1,16 @@
+{
+  "name": "first-puppeteer-scraper-example",
+  "version": "1.0.0",
+  "description": "Learning Web Scraping",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Priyaranjan Jena",
+  "license": "ISC",
+  "dependencies": {
+    "puppeteer": "^23.3.1"
+  }
+}
