@@ -1,9 +1,14 @@
 import puppeteer from "puppeteer";
 import mongoose from "mongoose";
+import dotenv from "dotenv";
+import speech from "./models/speeches.model.js";
 
-import speech from './models/speeches.model.js';
+dotenv.config();
 
-const db_URI = "mongodb://localhost:27017/rbi-speeches";
+// Ensure the variable matches what's in your .env file
+const db_URI = process.env.DB_URI;
+
+console.log(db_URI); // Check if db_URI is correctly logged
 
 const connectdb = async () => {
   try {
@@ -14,11 +19,11 @@ const connectdb = async () => {
     console.log("Connected to MongoDB");
   } catch (error) {
     console.log("Failed to connect to MongoDB", error.message);
+    process.exit(1);
   }
 };
 
 connectdb();
-
 
 const url = "https://www.rbi.org.in/Scripts/BS_ViewSpeeches.aspx";
 
@@ -34,9 +39,6 @@ const getSpeeches = async () => {
     waitUntil: "domcontentloaded",
   });
 
-  // storing the years
-  const years = [];
-
   // Initialize an array to store all speeches
   const allSpeeches = [];
 
@@ -46,7 +48,7 @@ const getSpeeches = async () => {
 
     // Click the element for the specific year
     await page.evaluate((year) => {
-      const yearEl = document.getElementById(`${year}0`);
+      const yearEl = document.getElementById("${year}0");
       if (yearEl) {
         yearEl.click();
       }
@@ -64,7 +66,7 @@ const getSpeeches = async () => {
         const dataEl = speechList[i].querySelector(".tableheader>b");
         const valueEl = speechList[i + 1].querySelector("td .link2");
         const linkEl = speechList[i + 1].querySelector("td .link2");
-        const pdfEl = speechList[i + 1].querySelector("td a");
+        const pdfEl = speechList[i + 1].querySelector("tr > td + td a");
 
         if (dataEl && valueEl && linkEl && pdfEl) {
           const date = dataEl.innerText.trim();
@@ -75,7 +77,6 @@ const getSpeeches = async () => {
           speeches.push({ date, value, link, pdf });
         }
       }
-
       return speeches;
     });
 
@@ -83,16 +84,16 @@ const getSpeeches = async () => {
     allSpeeches.push(...speeches); // Flatten the array
   }
 
+  // Log the combined array of speeches
+  console.log(allSpeeches);
+  await browser.close();
+
   //storing the values in mongo
   try {
     await speech.insertMany(allSpeeches);
   } catch (error) {
-    console.log("Something went wrong"), error.message;
+    console.log("Something went wrong", error.message);
   }
-
-  // Log the combined array of speeches
-  console.log(allSpeeches);
-  await browser.close();
 };
 
 getSpeeches();
