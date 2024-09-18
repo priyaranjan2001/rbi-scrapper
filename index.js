@@ -1,4 +1,24 @@
 import puppeteer from "puppeteer";
+import mongoose from "mongoose";
+
+import speech from './models/speeches.model.js';
+
+const db_URI = "mongodb://localhost:27017/rbi-speeches";
+
+const connectdb = async () => {
+  try {
+    await mongoose.connect(db_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log("Connected to MongoDB");
+  } catch (error) {
+    console.log("Failed to connect to MongoDB", error.message);
+  }
+};
+
+connectdb();
+
 
 const url = "https://www.rbi.org.in/Scripts/BS_ViewSpeeches.aspx";
 
@@ -20,13 +40,8 @@ const getSpeeches = async () => {
   // Initialize an array to store all speeches
   const allSpeeches = [];
 
-  await page.evaluate(() => {
-    const years = document.querySelectorAll('.accordianButton');
-    
-  })
-
   // Loop through the years from 2024 to 2022
-  for (let year = 2024; year >= 2022; year--) {
+  for (let year = 2024; year >= 1990; year--) {
     console.log(`Scraping year: ${year}`);
 
     // Click the element for the specific year
@@ -66,6 +81,13 @@ const getSpeeches = async () => {
 
     // Add the speeches of the current year to the allSpeeches array
     allSpeeches.push(...speeches); // Flatten the array
+  }
+
+  //storing the values in mongo
+  try {
+    await speech.insertMany(allSpeeches);
+  } catch (error) {
+    console.log("Something went wrong"), error.message;
   }
 
   // Log the combined array of speeches
